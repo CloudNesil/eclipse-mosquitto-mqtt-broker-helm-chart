@@ -1,0 +1,112 @@
+# Default values for eclipse-mosquitto.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: eclipse-mosquitto
+  tag: 1.6.7
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+container:
+  ports:
+    mqtt:
+      name: mqtt
+      port: 1884
+    mqtts:
+      name: mqtts
+      port: 1883
+
+service:
+  type: ClusterIP
+  ports:
+    mqtt:
+      name: mqtt
+      port: 1884
+    mqtts:
+      name: mqtts
+      port: 1883
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+config: |-
+  persistence true
+  persistence_location /mosquitto/data/
+  log_dest stdout
+  listener 1884
+  listener 1883
+  protocol mqtt
+  cafile /mosquitto/config/certs/ca.crt
+  certfile /mosquitto/config/certs/server.crt
+  keyfile /mosquitto/config/certs/server.key
+  require_certificate true
+  use_subject_as_username true
+
+certs:
+  ca:
+    crt: |-
+      -----BEGIN CERTIFICATE-----
+      CA_CERT
+      -----END CERTIFICATE-----
+  server:
+    crt: |-
+      -----BEGIN CERTIFICATE-----
+      SERVER_CERT
+      -----END CERTIFICATE-----
+    key: |-
+      -----BEGIN PRIVATE KEY-----
+      SERVER_KEY
+      -----END PRIVATE KEY-----
+
+
+## Persist data to a persistent volume
+persistence:
+  enabled: true
+  ## database data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+  accessMode: ReadWriteOnce
+  size: 8Gi
+  annotations: {}
+  storageClass: standard
+
+## Security context
+securityContext:
+  enabled: false
+  runAsUser: 999
+  fsGroup: 999
