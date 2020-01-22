@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "eclipse-mosquitto.fullname" . }}
+  labels:
+{{ include "eclipse-mosquitto.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.ports.mqtt.port }}
+      targetPort: {{ .Values.container.ports.mqtt.name }}
+      protocol: TCP
+      name: {{ .Values.service.ports.mqtt.name }}
+    - port: {{ .Values.service.ports.mqtts.port }}
+      targetPort: {{ .Values.container.ports.mqtts.name }}
+      protocol: TCP
+      name: {{ .Values.service.ports.mqtts.name }}
+  selector:
+    app.kubernetes.io/name: {{ include "eclipse-mosquitto.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

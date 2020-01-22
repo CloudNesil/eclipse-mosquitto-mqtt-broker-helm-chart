@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eclipse-mosquitto.fullname" . }}
+  labels:
+{{ include "eclipse-mosquitto.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "eclipse-mosquitto.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "eclipse-mosquitto.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+    {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.container.ports.mqtt.name }}
+              containerPort: {{ .Values.container.ports.mqtt.port }}
+              protocol: TCP
+            - name: {{ .Values.container.ports.mqtts.name }}
+              containerPort: {{ .Values.container.ports.mqtts.port }}
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.container.ports.mqtt.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.container.ports.mqtt.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: mosquitto-conf
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+              readOnly: true
+            - name: mosquitto-ca-cert
+              mountPath: /mosquitto/config/certs/ca.crt
+              subPath: ca.crt
+              readOnly: true
+            - name: mosquitto-server-cert
+              mountPath: /mosquitto/config/certs/server.crt
+              subPath: server.crt
+              readOnly: true
+            - name: mosquitto-server-key
+              mountPath: /mosquitto/config/certs/server.key
+              subPath: server.key
+              readOnly: true
+            - name: mosquitto-data
+              mountPath: /mosquitto/data
+              subPath: mosquitto/data
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: mosquitto-conf
+        configMap:
+          name: {{ include "eclipse-mosquitto.fullname" . }}-config
+      - name: mosquitto-ca-cert
+        configMap:
+          name: {{ include "eclipse-mosquitto.fullname" . }}-certs
+          items:
+            - key: ca.crt
+              path: ca.crt
+      - name: mosquitto-server-cert
+        configMap:
+          name: {{ include "eclipse-mosquitto.fullname" . }}-certs
+          items:
+              - key: server.crt
+                path: server.crt
+      - name: mosquitto-server-key
+        configMap:
+          name: {{ include "eclipse-mosquitto.fullname" . }}-certs
+          items:
+              - key: server.key
+                path: server.key
+      - name: mosquitto-data
+      {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "eclipse-mosquitto.fullname" . }}-pvc
+      {{- else }}
+        emptyDir: {}
+      {{- end -}}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
