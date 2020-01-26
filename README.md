@@ -2,6 +2,8 @@ eclipse-mosquitto-mqtt-broker-helm-chart
 ============
 Simple Helm Chart for Eclipse Mosquitto MQTT Broker
 
+#NOTE: This repo is under development. Do not use on production.
+
 ## Prerequisites
 - > Running Kubernetes Cluster
 - > Helm 2.10+
