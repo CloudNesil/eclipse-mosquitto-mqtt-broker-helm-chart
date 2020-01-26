@@ -17,6 +17,7 @@ Simple Helm Chart for Eclipse Mosquitto MQTT Broker
 $ helm repo add chartmuseum http://localhost:8080
 $ helm package eclipse-mosquitto
 $ helm push eclipse-mosquitto chartmuseum
+$ helm repo update
 ```
 
 #### 2. Create Self-signed certificates for CA, Server and Client
@@ -27,15 +28,12 @@ $ ./make-keys.sh
 ```
 
 #### 3. Configure values 
-```sh
-$ cd certs
-$ ./make-keys.sh 
-```
+Use created cert files on the chart values.yaml file
 
 #### 4. Deploy the relase with helm
 ```sh
-$ cd certs
-$ ./make-keys.sh 
+$ helm install --name eclipse-mosquitto-dev --namespace mqtt-dev chartmuseum/eclipse-mosquitto --version 1.0.0 -f values-dev.yaml
+
 ```
 
 
